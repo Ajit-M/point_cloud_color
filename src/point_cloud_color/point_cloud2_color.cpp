@@ -242,6 +242,7 @@ void PointCloudColor::readParams()
     ss << "camera_" << i << "/mask";
     std::string mask_param = ss.str();
     std::string mask_path;
+    //setting the default value of the mask param
     pnh.param(mask_param, mask_path, mask_path);
     if (!mask_path.empty())
     {
@@ -294,16 +295,18 @@ void PointCloudColor::readParams()
   NODELET_INFO("Minimum period between warnings: %.2f s.", min_warn_period_);
 }
 
+// Point cloud publisher
 void PointCloudColor::setupPublishers()
 {
   ros::NodeHandle &nh = getNodeHandle();
-
+  // Compression library for the point cloud 
   point_cloud_transport::PointCloudTransport pct(nh);
   
   // Advertise colored point cloud topic.
   cloud_pub_ = pct.advertise("cloud_out", cloud_queue_size_);
 }
 
+//Point cloud Subscribers
 void PointCloudColor::setupSubscribers()
 {
   ros::NodeHandle &nh = getNodeHandle();
@@ -411,6 +414,7 @@ void PointCloudColor::cameraCallback(const sensor_msgs::Image::ConstPtr& image,
   camInfoCallback(camera_info, i);
 }
 
+// Where the author is getting the warning from?
 bool PointCloudColor::cameraWarnedRecently(int i, int type)
 {
   std::pair<int, int> key(i, type);
@@ -456,6 +460,8 @@ void PointCloudColor::cloudCallback(const sensor_msgs::PointCloud2::ConstPtr &cl
   sensor_msgs::PointCloud2Iterator<uint8_t> color_begin_u8(*cloud_out, field_name_);
   sensor_msgs::PointCloud2Iterator<uint16_t> color_begin_u16(*cloud_out, field_name_);
 
+
+  // Need to figure out this!! ###
   // Set default color.
   for (size_t j = 0; j < num_points; ++j)
   {
@@ -508,7 +514,7 @@ void PointCloudColor::cloudCallback(const sensor_msgs::PointCloud2::ConstPtr &cl
       }
       continue;
     }
-
+    // Camera Matrix and Distortion coefficients
     cv::Mat camera_matrix(3, 3, CV_64FC1, const_cast<void *>(reinterpret_cast<const void *>(&cam_infos_[i]->K[0])));
     cv::Mat dist_coeffs(1, int(cam_infos_[i]->D.size()), CV_64FC1, const_cast<void *>(reinterpret_cast<const void *>(&cam_infos_[i]->D[0])));
     camera_matrix.convertTo(camera_matrix, CV_32FC1);
